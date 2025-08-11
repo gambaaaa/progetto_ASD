@@ -17,7 +17,13 @@ def bin_value_from_array(array: np.array):
     return ''.join(str(b) for b in array)
 
 def bin_value(h: Hypothesis):
-    return ''.join(str(b) for b in h.vector)
+    return ''.join(str(b) for b in h.binval)
+
+def bin_value_to_int(binval: str) -> int:
+    """
+    Converte una stringa binaria (es: '010') nel corrispondente valore intero.
+    """
+    return int(binval, 2)
 
 def preprocess_matrix_to_columns(matrix_file):
     """
@@ -38,18 +44,18 @@ def preprocess_matrix_to_columns(matrix_file):
     return matrix.T  # restituisce la matrice trasposta (per colonne)
 
 def set_fields(h: Hypothesis, transposed_matrix: np.ndarray):
-    # Inizializza il vettore a zero
-    h.vector = np.zeros(transposed_matrix.shape[1], dtype=int)
-    
-    # Se non è l'ipotesi vuota
+    n_rows = transposed_matrix.shape[0]  # Numero di righe (es: 7)
+    h.vector = np.zeros(n_rows, dtype=int)
     if h.binval != "0":
-        # Trova tutte le posizioni degli '1' (leggendo da sinistra a destra)
-        for pos, bit in enumerate(h.binval):
-            if bit == '1':
-                h.vector[pos] = 1
-            else:
-                h.vector[pos] = 0
-    
+        indices = [i for i, bit in enumerate(h.binval) if bit == '1']
+        if len(indices) == 1:
+            # Singoletto: copia la colonna corrispondente
+            h.vector = transposed_matrix[:, indices[0]].copy()
+        else:
+            # OR bitwise tra tutte le colonne corrispondenti agli '1'
+            for idx in indices:
+                h.vector = np.bitwise_or(h.vector, transposed_matrix[:, idx])
+
     return h
 
 def create_currents(h0: Hypothesis, M):
@@ -57,14 +63,14 @@ def create_currents(h0: Hypothesis, M):
     return current
 
 def find_successors(h0: Hypothesis, M):
-    if np.array_equal(h0.vector, np.ones(M, dtype=int)):
+    if h0.binval == '1' * M:
         return None
     else:
         successors = complement_zero_vectors(h0)
     return successors
 
 def find_predecessors(h0: Hypothesis, M):
-    if np.array_equal(h0.vector, np.zeros(M, dtype=int)):  # Corretto: predecessori del vettore zero
+    if h0.binval == '0' * M:
         return None
     else:
         predecessors = complement_one_vectors(h0)
@@ -72,24 +78,25 @@ def find_predecessors(h0: Hypothesis, M):
 
 def complement_zero_vectors(h0):
     new_hs = []
-    print(h0.vector)
-    for i in range(len(h0.vector)):
-        if h0.vector[i] == 0:
-            nuovo_vettore = h0.vector.copy()
-            nuovo_vettore[i] = 1  # complementiamo solo lo 0
-            h = Hypothesis(idx=None, binval=bin_value_from_array(nuovo_vettore),
-                         vector=nuovo_vettore, parents=[h0], n_bits=h0.n_bits)  # Corretto: parents è una lista
+    for i, bit in enumerate(h0.binval):
+        if bit == '0':
+            nuovo_binval = list(h0.binval)
+            nuovo_binval[i] = '1'
+            nuovo_binval_str = ''.join(nuovo_binval)
+            h = Hypothesis(idx=None, binval=nuovo_binval_str,
+                           n_bits=h0.n_bits, parents=[h0])
             new_hs.append(h)
     return new_hs
 
 def complement_one_vectors(h0):
     new_hs = []
-    for i in range(len(h0.vector)):
-        if h0.vector[i] == 1:
-            nuovo_vettore = h0.vector.copy()
-            nuovo_vettore[i] = 0  # complementiamo solo lo 1
-            h = Hypothesis(idx=None, binval=bin_value_from_array(nuovo_vettore),
-                         vector=nuovo_vettore, parents=[h0], n_bits=h0.n_bits)  # Corretto: parents è una lista
+    for i, bit in enumerate(h0.binval):
+        if bit == '1':
+            nuovo_binval = list(h0.binval)
+            nuovo_binval[i] = '0'
+            nuovo_binval_str = ''.join(nuovo_binval)
+            h = Hypothesis(idx=None, binval=nuovo_binval_str,
+                           n_bits=h0.n_bits, parents=[h0])
             new_hs.append(h)
     return new_hs
 
@@ -100,20 +107,20 @@ def propagate(h: Hypothesis, h_prime: Hypothesis):
     """
     # h deve essere un predecessore immediato di h_prime
     h_prime.vector = np.bitwise_or(h_prime.vector, h.vector)
+    return h_prime
 
 def check(h: Hypothesis) -> bool:
     """
     Ritorna True se in vector(h) non c'è alcuno zero,
     cioè tutti gli elementi di N sono coperti.
     """
-    print(h.binval)
     return np.all(h.vector != 0)
 
-def LM1(vector):
-    for i, b in enumerate(vector):
-        if b == 1:
-            return i + 1
-    return len(vector)  # Corretto: se non trova 1, ritorna la lunghezza
+def LM1(binval: str):
+    for i, b in enumerate(binval):
+        if b == '1':
+            return i
+    return -1  # Se non trova '1', ritorna -1
 
 def prox(hp: Hypothesis, current) -> Optional[Hypothesis]:  # Corretto: current può essere lista
     """
@@ -132,15 +139,16 @@ def prox(hp: Hypothesis, current) -> Optional[Hypothesis]:  # Corretto: current 
         # hp non è in current
         return None
 
-def generate_children(h, current, M):
+def generate_children(h, current, matrix):
     children = []
-
-    if np.array_equal(h.vector, np.zeros(M, dtype=int)):
-        for i in range(M):
+    
+    print("NUOVO CICLO!!!")
+    if np.array_equal(h.vector, np.zeros(matrix.shape[1], dtype=int)):
+        for i in range(matrix):
             h_prime_vec = h.vector.copy()
             h_prime_vec[i] = 1
-            h_prime = Hypothesis(i, bin_value_from_array(h_prime_vec), vector=h_prime_vec, n_bits=M)
-            set_fields(h_prime, matrix)
+            h_prime = Hypothesis(i, bin_value_from_array(h_prime_vec), n_bits=matrix.shape[1])
+            set_fields(h_prime, matrix.shape[1])
             children.append(h_prime)
         return children
 
@@ -148,45 +156,47 @@ def generate_children(h, current, M):
         return children
 
     h_first = current[0]
+    
+    current_h_first = h_first  # Usa una variabile locale
+        
+    for i in range(0, LM1(h.binval)):
+        h_prime_bin_list = [int(b) for b in h.binval]  # Corretto: parti dal vettore di h
+        h_prime_bin_list[i] = 1
+        h_prime = Hypothesis(i, binval=bin_value_from_array(h_prime_bin_list), n_bits=matrix.shape[1])
 
-    for i in range(1, LM1(h.vector)):
-        h_prime_vec = h.vector.copy()  # Corretto: parti dal vettore di h
-        if i < len(h_prime_vec):  # Verifica bounds
-            h_prime_vec[i] = 1
+        set_fields(h_prime, matrix)
+        h_prime = propagate(h, h_prime)
 
-            h_prime = Hypothesis(i, binval=bin_value_from_array(h_prime_vec),
-                               vector=h_prime_vec, n_bits=M)
-            set_fields(h_prime, matrix)
-            propagate(h, h_prime)
+        h_initial = initial(h, h_prime, matrix)
+        h_final = final(h, h_prime, matrix)
 
-            h_initial = initial(h, h_prime, M)
-            h_final = final(h, h_prime, M)
-            cont = 0
+        cont = 0
 
-            current_h_first = h_first  # Usa una variabile locale
+        # CORREZIONE PRINCIPALE: Controlla che h_first non sia None prima di usarlo
+        while (current_h_first is not None and
+            bin_value_to_int(current_h_first.binval) <= bin_value_to_int(h_initial.binval) and
+            bin_value_to_int(current_h_first.binval) >= bin_value_to_int(h_final.binval)):
+            
+            print("h_prime = 011? ", h_prime.binval)
+            if (dist(bin_value(current_h_first), bin_value(h_prime)) == 1 and
+                dist(bin_value(current_h_first), bin_value(h)) == 2):
 
-            # CORREZIONE PRINCIPALE: Controlla che h_first non sia None prima di usarlo
-            while (current_h_first is not None and
-                   ((h_initial and bin_value(current_h_first) <= bin_value(h_initial)) or
-                    (h_final and bin_value(current_h_first) >= bin_value(h_final)))):
+                current_h_first = propagate(current_h_first, h_prime)
+                cont += 1
 
-                if (dist(bin_value(current_h_first), bin_value(h_prime)) == 1 and
-                    dist(bin_value(current_h_first), bin_value(h)) == 2):
-                    propagate(current_h_first, h)
-                    cont += 1
+            current_h_first = prox(current_h_first, current)
 
-                current_h_first = prox(current_h_first, current)
-                if current_h_first is None:  # Esci se raggiungi la fine
-                    break
+        if cont == card(h):  # Assumendo che card() sia definita altrove
+            print("PADRE : ", h.binval)
+            print("È STATO AGGIUNTO = ", h_prime.binval)
+            children.append(h_prime)
 
-            if cont == card(h):  # Assumendo che card() sia definita altrove
-                children.append(h_prime)
-
+    
     return children
 
 def card(h):
-    """Calcola la cardinalità (numero di 1) nel vettore di h"""
-    return np.sum(h.vector)
+    """Calcola la cardinalità (numero di '1') nella stringa binval di h"""
+    return h.binval.count('1')
 
 def dist(v1, v2):
     """Calcola la distanza di Hamming tra due stringhe binarie"""
@@ -195,33 +205,42 @@ def dist(v1, v2):
     else:
         return np.sum(v1 != v2)
 
-def find_rightmost_one_index(vector):
-    for i in range(len(vector) - 1, -1, -1):
-        if vector[i] == 1:
-            return i
-    return -1
+def find_initial(binval):
+    """
+    Riceve una stringa binaria, trasforma in '0' il primo '1' che incontra da destra,
+    e restituisce la nuova stringa.
+    """
+    bin_list = list(binval)
+    for i in range(len(bin_list) - 1, -1, -1):
+        if bin_list[i] == '1':
+            bin_list[i] = '0'
+            break
+    return ''.join(bin_list)
 
-def find_leftmost_one_index(vector):
-    for i in range(len(vector)):
-        if vector[i] == 1:
-            return i
-    return -1
+def find_final(bin_str):
+    """
+    Riceve una stringa binaria, trasforma in '0' il primo '1' che incontra da sinistra,
+    e restituisce la nuova stringa.
+    """
+    bin_list = list(bin_str)
+    for i in range(len(bin_list)):
+        if bin_list[i] == '1':
+            bin_list[i] = '0'
+            break
+    return ''.join(bin_list)
 
 def initial(h, h_prime, M):
     if h_prime.vector is None:
         return None
         
     # Trova il primo bit a 1 partendo da destra (meno significativo)
-    rightmost_one_index = find_rightmost_one_index(h_prime.vector)
+    binval = find_initial(h_prime.binval)
 
-    if rightmost_one_index == -1:
-        return None
+    h_prime_bin_list = [int(b) for b in binval]
 
-    new_vector = h_prime.vector.copy()
-    new_vector[rightmost_one_index] = 0  # spegne il primo '1' da destra
-
-    h_new = Hypothesis(0, bin_value_from_array(new_vector), vector=new_vector, n_bits=M)
-    h_new.parents = find_predecessors(h_new, M)
+    h_new = Hypothesis(0, bin_value_from_array(h_prime_bin_list), n_bits=M.shape[1])
+    h_new = set_fields(h_new, M)
+    h_new.parents = find_predecessors(h_new, M.shape[1])
 
     return h_new
 
@@ -230,48 +249,53 @@ def final(h, h_prime, M):
     if h_prime.vector is None:
         return None
 
-    leftmost_one_index = find_leftmost_one_index(h_prime.vector)
-    if leftmost_one_index == -1:
-        return None
+    binval = find_final(h_prime.binval)
 
     # Crea un nuovo vettore complementando il bit trovato
-    new_vector = h_prime.vector.copy()
-    new_vector[leftmost_one_index] = 0
+    h_prime_bin_list = [int(b) for b in binval]
 
-    h_new = Hypothesis(0, bin_value_from_array(new_vector), vector=new_vector, n_bits=M)
-    h_new.parents = find_predecessors(h_new, M)
+    h_new = Hypothesis(0, bin_value_from_array(h_prime_bin_list), n_bits=M.shape[1])
+    h_new = set_fields(h_new, M)
+    h_new.parents = find_predecessors(h_new, M.shape[1])
 
     return h_new
 
 def global_initial(h: Hypothesis, M) -> Hypothesis:
     n_bits = M.shape[1]
-    bit_array = [int(b) for b in h.vector]  # Corretto: usa il vettore invece di binval
+    bin_list = list(h.binval)
 
-    if bit_array[0] == 0:
-        bit_array[0] = 1
-    else:
-        print("bin(h)[1] =/= 0, non posso andare avanti.")
+    # Step 1: Complementa il primo '0' che trovi da sinistra
+    found_zero = False
+    for i in range(len(bin_list)):
+        if bin_list[i] == '0':
+            bin_list[i] = '1'
+            found_zero = True
+            break
+    if not found_zero:
+        print("Nessuno zero trovato in binval, h =", h.binval)
         return h
 
-    # Step 2: Complementare il bit meno significativo impostato a 1
-    for i in range(len(bit_array) - 1, -1, -1):
-        if bit_array[i] == 1:
-            bit_array[i] = 0
+    # Step 2: Complementa il primo '1' che trovi da destra
+    found_one = False
+    for i in range(len(bin_list) - 1, -1, -1):
+        if bin_list[i] == '1':
+            bin_list[i] = '0'
+            found_one = True
             break
-    
-    h = Hypothesis(idx=None, vector=np.array(bit_array),
-                     binval=bin_value_from_array(bit_array), n_bits=n_bits)
-    h = set_fields(h,M)
-    #h.parents=find_predecessors(h,M)
-    
-    return Hypothesis(idx=None, vector=np.array(bit_array),
-                     binval=bin_value_from_array(bit_array), n_bits=n_bits)
+    if not found_one:
+        print("Nessun uno trovato in binval dopo il primo zero, h =", h.binval)
+        return h
+
+    new_binval = ''.join(bin_list)
+    h_new = Hypothesis(idx=None, binval=new_binval, n_bits=n_bits)
+    h_new = set_fields(h_new, M)
+    print(h_new.binval)
+    return h_new
 
 def remove_hr_from_current(current, h_second):
-    ref_value = bin_value(h_second)
-    
-    # Filtra le ipotesi mantenendo solo quelle >=
-    return [hr for hr in current if bin_value(hr) >= ref_value]
+    ref_value = bin_value_to_int(h_second.binval)
+    # Mantieni solo le ipotesi con valore binario minore o uguale a ref_value
+    return [hr for hr in current if bin_value_to_int(hr.binval) <= ref_value]
 
 def merge(next_list, children):
     """
@@ -317,18 +341,20 @@ while current:
             current.remove(h)
         elif all(bit == '0' for bit in h.binval):
             children = generate_children(h, current, n_bits)
-            print("children? ", children)
             next_list.extend(children)
         elif LM1(h.binval) != '0':
+            print(h.binval)
             h_second = global_initial(h, matrix)
             current = remove_hr_from_current(current, h_second)
-            
             if current:  # Verifica che current non sia vuoto
                 h_prime = current[0]
                 if h_prime != h:
-                    children = generate_children(h, current, n_bits)
+                    print("entra?")
+                    children = generate_children(h, current, matrix)
                     merge(next_list, children)
-        
+                    
     current = next_list
 
 print(f"Trovate {len(soluzioni)} soluzioni:")
+for i, h in enumerate(soluzioni):
+    print(f"Soluzione {i+1}: binval = {h.binval}, vector = {h.vector}")
