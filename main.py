@@ -27,7 +27,8 @@ def bin_value_to_int(binval: str) -> int:
 
 def preprocess_matrix_to_columns(matrix_file):
     """
-    Legge la matrice per righe dal file e restituisce una lista di colonne (trasposta).
+    Legge la matrice per righe dal file, rimuove le colonne che contengono solo zeri,
+    e restituisce la matrice trasposta (per colonne).
     """
     row_list = []
     with open(matrix_file) as f:
@@ -41,6 +42,9 @@ def preprocess_matrix_to_columns(matrix_file):
             row_list.append(row)
 
     matrix = np.array(row_list, dtype=int)
+    # Trova le colonne che NON sono tutte zero
+    nonzero_cols = np.any(matrix != 0, axis=0)
+    matrix = matrix[:, nonzero_cols]
     return matrix.T  # restituisce la matrice trasposta (per colonne)
 
 def set_fields(h: Hypothesis, transposed_matrix: np.ndarray):
@@ -143,12 +147,14 @@ def prox(hp: Hypothesis, current) -> Optional[Hypothesis]:
 def generate_children(h, current, matrix):
     children = []
     
-    if np.array_equal(h.vector, np.zeros(matrix.shape[1], dtype=int)):
-        for i in range(matrix):
-            h_prime_vec = h.vector.copy()
-            h_prime_vec[i] = 1
-            h_prime = Hypothesis(i, bin_value_from_array(h_prime_vec), n_bits=matrix.shape[1])
-            set_fields(h_prime, matrix.shape[1])
+    print("Generazione figli per:", h.binval)
+    if np.array_equal(h.vector, np.zeros(matrix.shape[0], dtype=int)):
+        for i in range(matrix.shape[1]):
+            h_prime_bin = ['0'] * matrix.shape[1]
+            h_prime_bin[i] = '1'
+            h_prime_binval = ''.join(h_prime_bin)
+            h_prime = Hypothesis(idx=None, binval=h_prime_binval, n_bits=matrix.shape[1])
+            set_fields(h_prime, matrix)
             children.append(h_prime)
         return children
 
@@ -168,18 +174,16 @@ def generate_children(h, current, matrix):
         h_initial = initial(h, h_prime, matrix)
         h_final = final(h, h_prime, matrix)
 
-        print("h_initial", h_initial.binval)
-        print("h_final", h_final.binval)
+        print("h_initial:", h_initial.binval if h_initial else "None")
+        print("h_final:", h_final.binval if h_final else "None")
+        print("h: ", h.binval)
         cont = 0
         # Per ogni iterazione, parti dal primo elemento di current
         current_h_first = current[0]
-        
-        print("h_prime", h_prime.binval)
         while (current_h_first is not None and
                bin_value_to_int(current_h_first.binval) <= bin_value_to_int(h_initial.binval) and
                bin_value_to_int(current_h_first.binval) >= bin_value_to_int(h_final.binval)):
             
-            print("Entra?")
             if (dist(bin_value(current_h_first), bin_value(h_prime)) == 1 and
                 dist(bin_value(current_h_first), bin_value(h)) == 2):
                 current_h_first.vector = propagate(current_h_first, h_prime)
@@ -187,11 +191,9 @@ def generate_children(h, current, matrix):
 
             current_h_first = prox(current_h_first, current)
         
-        print("contatore = ", cont)
-        
+        print("Contatore:", cont)
         if cont == card(h):
-            print("PADRE : ", h.binval)
-            print("È STATO AGGIUNTO = ", h_prime.binval)
+            print("Aggiungo h_prime:", h_prime.binval)
             children.append(h_prime)
     
     print("FINE CICLO! -------------------")
@@ -381,7 +383,8 @@ while current:
                 if h_prime != h:
                     children = generate_children(h, current, matrix)
                     merge(next_list, children)
-                    
+    
+    print("next_list:", [h.binval for h in next_list])
     current = next_list
 
 print(f"Trovate {len(soluzioni)} soluzioni:")
