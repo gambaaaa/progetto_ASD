@@ -156,12 +156,11 @@ def generate_children(h, current, matrix):
 
     if not current:  # Verifica che current non sia vuoto
         return children
-
-    current_h_first = current[0]
     
     print("h = ", h.binval)
     for i in range(0, LM1(h.binval)):
         # Crea h_prime
+        current_h_first = current[i]
         h_prime_bin_list = [int(b) for b in h.binval]
         h_prime_bin_list[i] = 1
         h_prime = Hypothesis(i, binval=bin_value_from_array(h_prime_bin_list), n_bits=matrix.shape[1])
