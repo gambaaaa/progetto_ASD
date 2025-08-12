@@ -157,6 +157,7 @@ def generate_children(h, current, matrix):
     if not current:  # Verifica che current non sia vuoto
         return children
 
+    current_h_first = current[0]
     for i in range(0, LM1(h.binval)):
         # Crea h_prime
         h_prime_bin_list = [int(b) for b in h.binval]
@@ -171,10 +172,10 @@ def generate_children(h, current, matrix):
 
         cont = 0
         # Per ogni iterazione, parti dal primo elemento di current
-        current_h_first = current[0]
+
         while (current_h_first is not None and
-               bin_value_to_int(current_h_first.binval) <= bin_value_to_int(h_initial.binval) and
-               bin_value_to_int(current_h_first.binval) >= bin_value_to_int(h_final.binval)):
+            bin_value_to_int(current_h_first.binval) <= bin_value_to_int(h_initial.binval) and
+            bin_value_to_int(current_h_first.binval) >= bin_value_to_int(h_final.binval)):
             
             if (dist(bin_value(current_h_first), bin_value(h_prime)) == 1 and
                 dist(bin_value(current_h_first), bin_value(h)) == 2):
@@ -339,7 +340,7 @@ matrix = np.array([
     [0,1,0,0,1,0,0]
 ]).T
 
-matrix = preprocess_matrix_to_columns("74L85.005.matrix")
+matrix = preprocess_matrix_to_columns("74L85.002.matrix")
 print("Matrice di colonne:")
 print(matrix)
 print("\n")
