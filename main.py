@@ -76,7 +76,8 @@ def find_predecessors(h0: Hypothesis, M):
         return None
     else:
         predecessors = complement_one_vectors(h0)
-        
+    
+    print("h0 binval:", h0.binval)
     print("Predecessori trovati:", [p.binval for p in predecessors])
     return predecessors
 
@@ -344,6 +345,7 @@ matrix = np.array([
     [0,1,0,0,1,0,0]
 ]).T
 
+matrix = preprocess_matrix_to_columns("74L85.001.matrix")
 print("Matrice di colonne:")
 print(matrix)
 print("\n")
