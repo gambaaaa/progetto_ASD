@@ -158,6 +158,8 @@ def generate_children(h, current, matrix):
         return children
 
     current_h_first = current[0]
+    
+    print("h = ", h.binval)
     for i in range(0, LM1(h.binval)):
         # Crea h_prime
         h_prime_bin_list = [int(b) for b in h.binval]
@@ -172,7 +174,6 @@ def generate_children(h, current, matrix):
 
         cont = 0
         # Per ogni iterazione, parti dal primo elemento di current
-
         while (current_h_first is not None and
             bin_value_to_int(current_h_first.binval) <= bin_value_to_int(h_initial.binval) and
             bin_value_to_int(current_h_first.binval) >= bin_value_to_int(h_final.binval)):
@@ -181,10 +182,10 @@ def generate_children(h, current, matrix):
                 dist(bin_value(current_h_first), bin_value(h)) == 2):
                 current_h_first.vector = propagate(current_h_first, h_prime)
                 cont += 1
-
             current_h_first = prox(current_h_first, current)
-        
+          
         if cont == card(h):
+            print("aggiunto h_prime:", h_prime.binval)
             children.append(h_prime)
 
     return children
@@ -340,7 +341,7 @@ matrix = np.array([
     [0,1,0,0,1,0,0]
 ]).T
 
-matrix = preprocess_matrix_to_columns("74L85.002.matrix")
+#matrix = preprocess_matrix_to_columns("74L85.002.matrix")
 print("Matrice di colonne:")
 print(matrix)
 print("\n")
@@ -350,7 +351,7 @@ h0 = Hypothesis(0, bin_value_from_array(np.zeros(n_bits, dtype=int)), n_bits=n_b
 h0 = set_fields(h0, matrix)  # vector = [0,0,0]
 
 current = create_currents(h0, n_bits)
-current.insert(0, h0)
+#current.insert(0, h0)
 
 print("ipotesi iniziali trovate.", len(current))
 
