@@ -340,7 +340,7 @@ matrix = np.array([
     [0,1,0,0,1,0,0]
 ]).T
 
-#matrix = preprocess_matrix_to_columns("74L85.002.matrix")
+#matrix = preprocess_matrix_to_columns("74L85.001.matrix")
 print("Matrice di colonne:")
 print(matrix)
 print("\n")
