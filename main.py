@@ -71,8 +71,7 @@ def find_successors(h0: Hypothesis, M):
         return None
     else:
         successors = complement_zero_vectors(h0)
-        
-    print("Successori trovati:", [s.binval for s in successors])
+
     return successors
 
 def find_predecessors(h0: Hypothesis, M):
@@ -80,9 +79,7 @@ def find_predecessors(h0: Hypothesis, M):
         return None
     else:
         predecessors = complement_one_vectors(h0)
-    
-    print("h0 binval:", h0.binval)
-    print("Predecessori trovati:", [p.binval for p in predecessors])
+
     return predecessors
 
 def complement_zero_vectors(h0):
@@ -146,8 +143,7 @@ def prox(hp: Hypothesis, current) -> Optional[Hypothesis]:
 
 def generate_children(h, current, matrix):
     children = []
-    
-    print("Generazione figli per:", h.binval)
+
     if np.array_equal(h.vector, np.zeros(matrix.shape[0], dtype=int)):
         for i in range(matrix.shape[1]):
             h_prime_bin = ['0'] * matrix.shape[1]
@@ -170,13 +166,9 @@ def generate_children(h, current, matrix):
         set_fields(h_prime, matrix)
         h_prime.vector = propagate(h, h_prime)
 
-        print("h_prime", h_prime.binval)
         h_initial = initial(h, h_prime, matrix)
         h_final = final(h, h_prime, matrix)
 
-        print("h_initial:", h_initial.binval if h_initial else "None")
-        print("h_final:", h_final.binval if h_final else "None")
-        print("h: ", h.binval)
         cont = 0
         # Per ogni iterazione, parti dal primo elemento di current
         current_h_first = current[0]
@@ -191,12 +183,9 @@ def generate_children(h, current, matrix):
 
             current_h_first = prox(current_h_first, current)
         
-        print("Contatore:", cont)
         if cont == card(h):
-            print("Aggiungo h_prime:", h_prime.binval)
             children.append(h_prime)
-    
-    print("FINE CICLO! -------------------")
+
     return children
 
 def card(h):
@@ -257,6 +246,7 @@ def initial(h: Hypothesis, h_prime: Hypothesis, M) -> Optional[Hypothesis]:
         sorted_preds = sorted(left_predecessors, 
                             key=lambda x: bin_value_to_int(x.binval), 
                             reverse=True)
+        leftmost = sorted_preds[0]
     else:
         leftmost = max(left_predecessors, key=lambda x: bin_value_to_int(x.binval))
     
@@ -321,13 +311,15 @@ def global_initial(h: Hypothesis, M) -> Hypothesis:
     new_binval = ''.join(bin_list)
     h_new = Hypothesis(idx=None, binval=new_binval, n_bits=n_bits)
     h_new = set_fields(h_new, M)
-    print(h_new.binval)
     return h_new
 
 def remove_hr_from_current(current, h_second):
     ref_value = bin_value_to_int(h_second.binval)
-    # Mantieni solo le ipotesi con valore binario minore o uguale a ref_value
-    return [hr for hr in current if bin_value_to_int(hr.binval) <= ref_value]
+    # Mantieni solo le ipotesi con valore binario strettamente minore di ref_value
+    for hr in current[:]:
+        if bin_value_to_int(hr.binval) > ref_value:
+            current.remove(hr)
+    return current
 
 def merge(next_list, children):
     """
@@ -357,6 +349,7 @@ h0 = Hypothesis(0, bin_value_from_array(np.zeros(n_bits, dtype=int)), n_bits=n_b
 h0 = set_fields(h0, matrix)  # vector = [0,0,0]
 
 current = create_currents(h0, n_bits)
+current.insert(0, h0)
 
 print("ipotesi iniziali trovate.", len(current))
 
@@ -372,8 +365,8 @@ while current:
         if check(h):
             soluzioni.append(h)
             current.remove(h)
-        elif all(bit == '0' for bit in h.binval):
-            children = generate_children(h, current, n_bits)
+        elif h.binval == '0' * n_bits:
+            children = generate_children(h, current, matrix)
             next_list.extend(children)
         elif LM1(h.binval) != '0':
             h_second = global_initial(h, matrix)
@@ -383,8 +376,7 @@ while current:
                 if h_prime != h:
                     children = generate_children(h, current, matrix)
                     merge(next_list, children)
-    
-    print("next_list:", [h.binval for h in next_list])
+
     current = next_list
 
 print(f"Trovate {len(soluzioni)} soluzioni:")
