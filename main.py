@@ -350,7 +350,7 @@ h0 = Hypothesis(0, bin_value_from_array(np.zeros(n_bits, dtype=int)), n_bits=n_b
 h0 = set_fields(h0, matrix)  # vector = [0,0,0]
 
 current = create_currents(h0, n_bits)
-#current.insert(0, h0)
+current.insert(0, h0)
 
 print("ipotesi iniziali trovate.", len(current))
 
