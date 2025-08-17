@@ -340,7 +340,7 @@ matrix = np.array([
     [0,1,0,0,1,0,0]
 ]).T
 
-input_filename = "74L85.005.matrix"
+input_filename = "74L85.000.matrix"
 
 matrix = preprocess_matrix_to_columns(input_filename)
 print("Matrice di colonne:")
