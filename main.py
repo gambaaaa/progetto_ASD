@@ -160,7 +160,7 @@ def generate_children(h, current, matrix):
     print("h = ", h.binval)
     for i in range(0, LM1(h.binval)):
         # Crea h_prime
-        current_h_first = current[i]
+        current_h_first = current[0]
         h_prime_bin_list = [int(b) for b in h.binval]
         h_prime_bin_list[i] = 1
         h_prime = Hypothesis(i, binval=bin_value_from_array(h_prime_bin_list), n_bits=matrix.shape[1])
@@ -340,7 +340,9 @@ matrix = np.array([
     [0,1,0,0,1,0,0]
 ]).T
 
-#matrix = preprocess_matrix_to_columns("74L85.001.matrix")
+input_filename = "74L85.005.matrix"
+
+matrix = preprocess_matrix_to_columns(input_filename)
 print("Matrice di colonne:")
 print(matrix)
 print("\n")
@@ -350,7 +352,6 @@ h0 = Hypothesis(0, bin_value_from_array(np.zeros(n_bits, dtype=int)), n_bits=n_b
 h0 = set_fields(h0, matrix)  # vector = [0,0,0]
 
 current = create_currents(h0, n_bits)
-current.insert(0, h0)
 
 print("ipotesi iniziali trovate.", len(current))
 
@@ -380,6 +381,29 @@ while current:
 
     current = next_list
 
-print(f"Trovate {len(soluzioni)} soluzioni:")
-for i, h in enumerate(soluzioni):
-    print(f"Soluzione {i+1}: binval = {h.binval}, vector = {h.vector}")
+# Generazione del file di output .mhs
+output_filename = input_filename.replace(".matrix", ".mhs")
+
+# Creazione del riassunto come commento
+summary = f""";;; Input matrix: {input_filename}
+;;; Numero di MHS trovati: {len(soluzioni)}
+;;; Dimensione degli MHS: {n_bits} bit
+;;; 
+;;; Lista dei Minimal Hitting Sets (in formato colonna):
+"""
+
+# Scrittura su file
+with open(output_filename, 'w') as f:
+    # Scrivi il riassunto come commenti
+    f.write(summary)
+    
+    # Scrivi ogni MHS come colonna nel file
+    for mhs in soluzioni:
+        # Converti la rappresentazione binaria in array di interi
+        mhs_array = [int(bit) for bit in mhs.binval]
+        # Scrivi ogni bit su una riga separata con " -" alla fine
+        for bit in mhs_array:
+            f.write(f"{bit} -\n")
+
+print(f"\nMHS trovati: {len(soluzioni)}")
+print(f"Risultati salvati nel file: {output_filename}")
