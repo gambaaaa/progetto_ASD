@@ -1,6 +1,9 @@
 ;;; Input matrix: 74L85.005.matrix
+;;; Matrice di dimensioni: 1 x 33
+;;; Dimensione della matrice dopo il preprocessing: 1 x 1
+;;; Numero di ipotesi iniziali: 1
 ;;; Numero di MHS trovati: 1
-;;; Dimensione degli MHS: 1 bit
-;;; 
-;;; Lista dei Minimal Hitting Sets (in formato colonna):
+;;; Cardinalità degli MHS:
+;;; 	 Soluzione 1: 1 bit(s)
+;;; Lista dei Minimal Hitting Sets:
 1 -

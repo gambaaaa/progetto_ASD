@@ -1,0 +1,11 @@
+;;; Input matrix: test.matrix
+;;; Matrice di dimensioni: 3 x 7
+;;; Dimensione della matrice dopo il preprocessing: 3 x 7
+;;; Numero di ipotesi iniziali: 3
+;;; Numero di MHS trovati: 1
+;;; Cardinalità degli MHS:
+;;; 	 Soluzione 110: 2 bit(s)
+;;; Lista dei Minimal Hitting Sets:
+1 -
+1 -
+0 -

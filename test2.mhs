@@ -1,0 +1,15 @@
+;;; Input matrix: test2.matrix
+;;; Matrice di dimensioni: 5 x 3
+;;; Dimensione della matrice dopo il preprocessing: 5 x 3
+;;; Numero di ipotesi iniziali: 5
+;;; Numero di MHS trovati: 3
+;;; Cardinalità degli MHS:
+;;; 	 Soluzione 00010: 1 bit(s)
+;;; 	 Soluzione 10100: 2 bit(s)
+;;; 	 Soluzione 01100: 2 bit(s)
+;;; Lista dei Minimal Hitting Sets:
+0 1 0 -
+0 0 1 -
+0 1 1 -
+1 0 0 -
+0 0 0 -

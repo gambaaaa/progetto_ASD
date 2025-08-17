@@ -1,5 +1,12 @@
 ;;; Input matrix: 74L85.002.matrix
-;;; Numero di MHS trovati: 0
-;;; Dimensione degli MHS: 4 bit
-;;; 
-;;; Lista dei Minimal Hitting Sets (in formato colonna):
+;;; Matrice di dimensioni: 4 x 33
+;;; Dimensione della matrice dopo il preprocessing: 4 x 16
+;;; Numero di ipotesi iniziali: 4
+;;; Numero di MHS trovati: 1
+;;; Cardinalità degli MHS:
+;;; 	 Soluzione 1110: 3 bit(s)
+;;; Lista dei Minimal Hitting Sets:
+1 -
+1 -
+1 -
+0 -

@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Optional
+import sys
 
 class Hypothesis:
     def __init__(self, idx, binval, parents=None, vector=None, n_bits=None):
@@ -25,10 +26,14 @@ def bin_value_to_int(binval: str) -> int:
     """
     return int(binval, 2)
 
+
 def preprocess_matrix_to_columns(matrix_file):
     """
     Legge la matrice per righe dal file, rimuove le colonne che contengono solo zeri,
-    e restituisce la matrice trasposta (per colonne).
+    e restituisce:
+      - la matrice trasposta (per colonne)
+      - la dimensione originale (righe, colonne)
+      - la dimensione dopo il preprocessing (righe, colonne)
     """
     row_list = []
     with open(matrix_file) as f:
@@ -42,10 +47,14 @@ def preprocess_matrix_to_columns(matrix_file):
             row_list.append(row)
 
     matrix = np.array(row_list, dtype=int)
+    original_shape = matrix.shape  # dimensioni prima del preprocessing
+
     # Trova le colonne che NON sono tutte zero
     nonzero_cols = np.any(matrix != 0, axis=0)
     matrix = matrix[:, nonzero_cols]
-    return matrix.T  # restituisce la matrice trasposta (per colonne)
+    processed_shape = matrix.shape  # dimensioni dopo il preprocessing
+
+    return matrix.T, original_shape, processed_shape
 
 def set_fields(h: Hypothesis, transposed_matrix: np.ndarray):
     n_rows = transposed_matrix.shape[0]  # Numero di righe (es: 7)
@@ -160,7 +169,7 @@ def generate_children(h, current, matrix):
     print("h = ", h.binval)
     for i in range(0, LM1(h.binval)):
         # Crea h_prime
-        current_h_first = current[0]
+        current_h_first = current[i]
         h_prime_bin_list = [int(b) for b in h.binval]
         h_prime_bin_list[i] = 1
         h_prime = Hypothesis(i, binval=bin_value_from_array(h_prime_bin_list), n_bits=matrix.shape[1])
@@ -333,16 +342,16 @@ def merge(next_list, children):
     next_list.sort(key=lambda h: h.binval, reverse=True)
     return next_list
 
-# Inizializzazione
-matrix = np.array([
-    [1,1,0,1,1,0,1],
-    [0,0,1,1,0,1,0],
-    [0,1,0,0,1,0,0]
-]).T
 
-input_filename = "74L85.000.matrix"
+# Il main comincia qui
 
-matrix = preprocess_matrix_to_columns(input_filename)
+input_filename = "test2"
+
+if len(sys.argv) > 1:
+    input_filename = sys.argv[1]
+    
+input_filename += ".matrix"
+matrix, orig_shape, proc_shape = preprocess_matrix_to_columns(input_filename)
 print("Matrice di colonne:")
 print(matrix)
 print("\n")
@@ -352,8 +361,9 @@ h0 = Hypothesis(0, bin_value_from_array(np.zeros(n_bits, dtype=int)), n_bits=n_b
 h0 = set_fields(h0, matrix)  # vector = [0,0,0]
 
 current = create_currents(h0, n_bits)
+initial_len_current = len(current)
 
-print("ipotesi iniziali trovate.", len(current))
+print("ipotesi iniziali trovate.", initial_len_current)
 
 for h in current:
     h = set_fields(h,matrix)
@@ -386,24 +396,28 @@ output_filename = input_filename.replace(".matrix", ".mhs")
 
 # Creazione del riassunto come commento
 summary = f""";;; Input matrix: {input_filename}
+;;; Matrice di dimensioni: {orig_shape[0]} x {orig_shape[1]}
+;;; Dimensione della matrice dopo il preprocessing: {proc_shape[0]} x {proc_shape[1]}
+;;; Numero di ipotesi iniziali: {initial_len_current}
 ;;; Numero di MHS trovati: {len(soluzioni)}
-;;; Dimensione degli MHS: {n_bits} bit
-;;; 
-;;; Lista dei Minimal Hitting Sets (in formato colonna):
+;;; Cardinalità degli MHS:
 """
+
+# Aggiungo la cardinalità di tutte le soluzioni
+for idx, mhs in enumerate(soluzioni, start=1):
+    summary += f";;; \t Soluzione {mhs.binval}: {card(mhs)} bit(s)\n"
+
+summary += ";;; Lista dei Minimal Hitting Sets:\n"
 
 # Scrittura su file
 with open(output_filename, 'w') as f:
     # Scrivi il riassunto come commenti
     f.write(summary)
-    
-    # Scrivi ogni MHS come colonna nel file
-    for mhs in soluzioni:
-        # Converti la rappresentazione binaria in array di interi
-        mhs_array = [int(bit) for bit in mhs.binval]
-        # Scrivi ogni bit su una riga separata con " -" alla fine
-        for bit in mhs_array:
-            f.write(f"{bit} -\n")
+
+    # Trasponi le soluzioni: prendi tutti i bit alla stessa posizione
+    for i in range(len(soluzioni[0].binval)):
+        row_bits = [mhs.binval[i] for mhs in soluzioni]
+        f.write(" ".join(row_bits) + " -\n")
 
 print(f"\nMHS trovati: {len(soluzioni)}")
 print(f"Risultati salvati nel file: {output_filename}")

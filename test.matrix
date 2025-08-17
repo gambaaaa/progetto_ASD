@@ -1,0 +1,5 @@
+;;; File di test, adattato dall'esempio delle slides 
+;;; Soluzione: 110
+1 1 0 1 1 0 1 -
+0 0 1 1 0 1 0 -
+0 1 0 0 1 0 0 -
