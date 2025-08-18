@@ -3,6 +3,7 @@ from typing import Optional
 import time
 import os
 from tqdm import tqdm
+from datetime import datetime
 
 class Hypothesis:
     def __init__(self, idx, binval, parents=None, vector=None, n_bits=None):
@@ -357,11 +358,11 @@ def process_matrix_file(input_filename, timeout_sec=60, ask_every_level=True):
     interrupted_level = None
 
     level = 0
-    pbar = tqdm(total=None, desc=f"Processing {os.path.basename(input_filename)}", leave=True)
+
     while current:
         next_list = []
         level += 1
-        pbar.set_postfix({"Level": level, "Current": len(current), "Solutions": len(soluzioni)})
+        print(f"\n\nLivello {level} - Numero di ipotesi correnti: {len(current)} - Soluzioni trovate: {len(soluzioni)}")
         for h in current[:]:
             if check(h):
                 soluzioni.append(h)
@@ -378,7 +379,6 @@ def process_matrix_file(input_filename, timeout_sec=60, ask_every_level=True):
                         children = generate_children(h, current, matrix)
                         merge(next_list, children)
         current = next_list
-        pbar.update(1)
 
         # Interruzione automatica per timeout
         if time.time() - start_time > timeout_sec:
@@ -386,14 +386,10 @@ def process_matrix_file(input_filename, timeout_sec=60, ask_every_level=True):
             interrupted = True
             interrupted_level = level
             break
-
-    pbar.close()
-
-    # Generazione del file di output .mhs
-    output_path = "results1"
+        output_path = "results1"
+        
     output_filename = input_filename.replace(".matrix", ".mhs")
     output_path = output_path + output_filename
-    error_filename = "error.log"
     
     summary = f""";;; Input matrix: {input_filename}
 ;;; Matrice di dimensioni: {orig_shape[0]} x {orig_shape[1]}
@@ -418,15 +414,6 @@ def process_matrix_file(input_filename, timeout_sec=60, ask_every_level=True):
                 f.write(" ".join(row_bits) + " -\n")
     print(f"\nMHS trovati: {len(soluzioni)}")
     print(f"Risultati salvati nel file: {output_filename}")
-    
-    with open(error_filename, 'w') as f:
-        if len(soluzioni) == 0:
-            f.write("Nessun MHS trovato.\n")
-            
-        if interrupted:
-            f.write(f"Calcolo interrotto al livello {interrupted_level} dopo {timeout_sec} secondi.\n")
-        else:
-            f.write("Calcolo completato senza interruzioni.\n")
 
 # Ciclo su tutti i file .matrix nella cartella
 # Nome della cartella di input
@@ -436,6 +423,17 @@ timeout_sec = 60  # Durata massima in secondi
 ask_every_level = True  # Chiedo all'utente ad ogni livello se continuare
 
 matrix_files = [os.path.join(folder_name, f) for f in os.listdir(folder_name) if f.endswith(".matrix")]
-for file_path in matrix_files:
-    print(f"\n--- Processing file: {file_path} ---")
-    process_matrix_file(file_path, timeout_sec=timeout_sec, ask_every_level=True)
+try:
+    for file_path in matrix_files:
+        print(f"\n--- Processing file: {file_path} ---")
+        process_matrix_file(file_path, timeout_sec=timeout_sec, ask_every_level=True)
+except KeyboardInterrupt:
+        # Prepara il messaggio di errore
+        error_msg = f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] " \
+                    f"Processo interrotto dall'utente durante l'elaborazione di {file_path}\n"
+        
+        # Scrivi nel file di log in append
+        with open("error.log", "a", encoding="utf-8") as f:
+            f.write(error_msg)
+        
+        print("\nInterruzione ricevuta! Errore registrato in error.log")

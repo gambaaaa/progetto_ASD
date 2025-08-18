@@ -1,0 +1,12 @@
+;;; Input matrix: benchmarks1/c1908.002.matrix
+;;; Matrice di dimensioni: 2 x 881
+;;; Dimensione della matrice dopo il preprocessing: 2 x 23
+;;; Numero di ipotesi iniziali: 2
+;;; Numero di MHS trovati: 2
+;;; Cardinalità degli MHS:
+;;; 	 Soluzione 10: 1 bit(s)
+;;; 	 Soluzione 01: 1 bit(s)
+;;; Lista dei Minimal Hitting Sets:
+;;; Calcolo COMPLETATO
+1 0 -
+0 1 -
