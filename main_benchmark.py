@@ -406,6 +406,11 @@ def process_matrix_file(input_filename, timeout_sec=60, ask_every_level=True):
     else:
         summary += ";;; Calcolo COMPLETATO\n"
 
+    with open("error.log", "a", encoding="utf-8") as f:
+        if len(soluzioni) == 0:
+            f.write(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] " \
+                    f"Nessun MHS trovato per il file {input_filename}\n")
+            
     with open(output_filename, 'w') as f:
         f.write(summary)
         if soluzioni:
@@ -414,6 +419,7 @@ def process_matrix_file(input_filename, timeout_sec=60, ask_every_level=True):
                 f.write(" ".join(row_bits) + " -\n")
     print(f"\nMHS trovati: {len(soluzioni)}")
     print(f"Risultati salvati nel file: {output_filename}")
+
 
 # Ciclo su tutti i file .matrix nella cartella
 # Nome della cartella di input
