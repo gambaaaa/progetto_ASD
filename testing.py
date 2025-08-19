@@ -348,7 +348,7 @@ def merge(next_list, children):
 # Nome della cartella di input
 folder_name = "benchmarks1"
 
-timeout_sec = 20  # Durata massima in secondi 
+timeout_sec = 2  # Durata massima in secondi 
 ask_every_level = True  # Chiedo all'utente ad ogni livello se continuare
 
 matrix_files = [os.path.join(folder_name, f) for f in os.listdir(folder_name) if f.endswith(".matrix")]
