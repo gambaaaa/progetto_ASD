@@ -407,6 +407,10 @@ for input_filename in matrix_files:
     else:
         min_card = max_card = 0
 
+    if len(soluzioni) == 0:
+        with open("no_mhs_found.log", "w") as f:
+            f.write(f"Nessun Minimal Hitting Set trovato nel file: {input_filename}\n")
+
     summary = f""";;; Input matrix: {input_filename}
 ;;; Matrice di dimensioni: {orig_shape[0]} x {orig_shape[1]}
 ;;; Dimensione della matrice dopo il preprocessing: {proc_shape[0]} x {proc_shape[1]}

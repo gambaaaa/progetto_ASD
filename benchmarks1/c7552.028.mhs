@@ -1,0 +1,17 @@
+;;; Input matrix: benchmarks1/c7552.028.matrix
+;;; Matrice di dimensioni: 4 x 3512
+;;; Dimensione della matrice dopo il preprocessing: 4 x 160
+;;; Numero di ipotesi iniziali: 4
+;;; Numero di MHS trovati: 4
+;;; Cardinalità minima MHS: 1
+;;; Cardinalità massima MHS: 1
+;;; Lista dei Minimal Hitting Sets trovati:
+;;; 	 Soluzione 1000: 1 bit(s)
+;;; 	 Soluzione 0100: 1 bit(s)
+;;; 	 Soluzione 0010: 1 bit(s)
+;;; 	 Soluzione 0001: 1 bit(s)
+;;; Calcolo COMPLETATO
+1 0 0 0 -
+0 1 0 0 -
+0 0 1 0 -
+0 0 0 1 -
