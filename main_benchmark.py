@@ -346,7 +346,7 @@ def merge(next_list, children):
         
 # Ciclo su tutti i file .matrix nella cartella
 # Nome della cartella di input
-folder_name = "benchmarks1"
+folder_name = "benchmarks2"
 
 timeout_sec = 20  # Durata massima in secondi 
 ask_every_level = True  # Chiedo all'utente ad ogni livello se continuare
